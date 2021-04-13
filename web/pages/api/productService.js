@@ -5,7 +5,9 @@ export async function getProducts() {
     return await response.json()
 }
 
-export async function getProductById(id: String) {
+export async function getProductById(id) {
     const response = await fetch(`${PRODUCT_API_URL}/:id`)
     return await response.json()
 }
+
+export { getProducts, getProductById }
