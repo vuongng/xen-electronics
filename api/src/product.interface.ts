@@ -14,4 +14,8 @@ interface IRequestBody {
     userId: number
 }
 
-export { IQueryString, IRequestParams, IRequestBody }
+interface IHeaders {
+    token?: string
+}
+
+export { IQueryString, IRequestParams, IRequestBody, IHeaders }

@@ -1,5 +1,5 @@
-import { IRequestParams, IQueryString, IRequestBody } from "./product.interface"
-import { ICredentials, IHeaders } from "./auth.interface"
+// import { App } from './app'
+import { IRequestParams, IQueryString, IRequestBody, IHeaders } from "./product.interface"
 import Fastify, { FastifyInstance, RouteShorthandOptions } from "fastify"
 import { fastifyPostgres } from "fastify-postgres"
 import { Server, IncomingMessage, ServerResponse } from "http"
@@ -8,56 +8,55 @@ const server: FastifyInstance<
   Server,
   IncomingMessage,
   ServerResponse
-> = Fastify()
+> = Fastify();
 
-// Define schema for product ID in request param
 const schema = {
   querystring: {
-    type: "object",
-    properties: {
-      brand: {
-        type: "string",
+      type: "object",
+      properties: {
+          brand: {
+              type: "string",
+          },
+          category: {
+              type: "string",
+          },
       },
-      category: {
-        type: "string",
-      },
-    },
   },
   params: {
-    type: "object",
-    properties: {
-      id: {
-        type: "number",
+      type: "object",
+      properties: {
+          id: {
+              type: "number",
+          },
       },
-    },
   },
   headers: {
-    type: "object",
-    properties: {
-      token: "string",
-    },
+      type: "object",
+      properties: {
+          token: "string",
+      },
   },
 }
 
 // Order schema
 const orderSchema = {
   body: {
-    type: "object",
-    required: ["products"],
-    properties: {
-      products: {
-        type: "string", // Serialized products
+      type: "object",
+      required: ["products"],
+      properties: {
+          products: {
+              type: "string", // Serialized products
+          },
+          totalPrice: {
+              type: "number",
+          },
+          deliveryAddress: {
+              type: "string", // Serialized address
+          },
+          userId: {
+              type: "number",
+          },
       },
-      totalPrice: {
-        type: "number",
-      },
-      deliveryAddress: {
-        type: "string", // Serialized address
-      },
-      userId: {
-        type: "number",
-      },
-    },
   },
 }
 
@@ -67,7 +66,7 @@ server.register(fastifyPostgres, {
   ssl: {
     rejectUnauthorized: false,
   },
-})
+});
 
 // Register with prefix: /api/
 server.register(
@@ -102,13 +101,13 @@ server.register(
     });
 
     // Save order
-    api.post<{Body: IRequestBody}>("/orders/save", async (request, reply) => {
+    api.post<{ Body: IRequestBody }>("/orders/save", async (request, reply) => {
       try {
         const { products, userId, totalPrice, deliveryAddress } = request.body;
         return server.pg.transact(async (client) => {
           return await client.query(
             `INSERT INTO orders(products, totalPrice, deliveryAddress, userId)
-                  VALUES(${products}, ${totalPrice}, ${deliveryAddress}, ${userId})`
+              VALUES(${products}, ${totalPrice}, ${deliveryAddress}, ${userId})`
           );
         });
       } catch (err) {
@@ -124,21 +123,23 @@ server.register(
   }
 );
 
-// Create products table (async)
+// Seed data
+//
+//
 server.post("/create-products-table", async () => {
   // serial: auto increase number
   const createProductsTableQuery = `
-        CREATE TABLE products (
-            id serial PRIMARY KEY,
-            name varchar(255) NOT NULL,
-            description text,
-            price real NOT NULL,
-            category varchar(255),
-            brand varchar(255),
-            imageUrl text,
-            created_at timestamp default NULL
-        );
-    `;
+          CREATE TABLE products (
+              id serial PRIMARY KEY,
+              name varchar(255) NOT NULL,
+              description text,
+              price real NOT NULL,
+              category varchar(255),
+              brand varchar(255),
+              imageUrl text,
+              created_at timestamp default NULL
+          );
+      `;
   return server.pg.transact(async (client) => {
     try {
       const result = await client.query(createProductsTableQuery);
@@ -153,20 +154,42 @@ server.post("/create-products-table", async () => {
 
 server.post("/create-orders-table", async () => {
   const createOrdersTableQuery = `
-        CREATE TABLE orders (
-            id serial PRIMARY KEY,
-            products text NOT NULL,
-            totalPrice real NOT NULL,
-            deliveryAddress text NOT NULL,
-            CONSTRAINT fk_user
-                FOREIGN KEY(userId)
-                    REFERENCES users(id)
-        );
-    `;
+          CREATE TABLE orders (
+              id serial PRIMARY KEY,
+              products text NOT NULL,
+              totalPrice real NOT NULL,
+              deliveryAddress text default NULL,
+              userEmail varchar(255),
+              CONSTRAINT fk_user
+                  FOREIGN KEY(userEmail)
+                      REFERENCES users(email)
+          );
+      `;
   return server.pg.transact(async (client) => {
     try {
       const result = await client.query(createOrdersTableQuery);
       console.log("Orders table was created successfully");
+      return result;
+    } catch (err) {
+      console.log(err);
+      process.exit(1);
+    }
+  });
+});
+
+server.post("/create-user-table", async () => {
+  const createUsersTableQuery = `
+      CREATE TABLE users (
+        id serial,
+        email varchar(255) PRIMARY KEY,
+        password varchar(255) NOT NULL,
+        address text default NULL
+      );
+    `;
+  return server.pg.transact(async (client) => {
+    try {
+      const result = await client.query(createUsersTableQuery);
+      console.log("Users table was created successfully");
       return result;
     } catch (err) {
       server.log.error(err);
@@ -178,12 +201,12 @@ server.post("/create-orders-table", async () => {
 // Seed data
 server.post("/init-data", (request, reply) => {
   const batchProductQuery = `
-        INSERT INTO products (name, description, price, category, brand, imageUrl)
-        VALUES ('Iphone X space gray', 'new smartphone from Apple', 2000.00, 'smartphones', 'Apple', 'https://unsplash.com/photos/xdLXPic3Wfk'),
-               ('Sony WH-MX4', 'best noise cancelling headphone', 800.50, 'headsets', 'Sony', 'https://unsplash.com/photos/mpnA-Cgrzv8'),
-               ('Dell XPS 13', 'future of laptop with core i7 and 16gb RAM included 4k screen', 2500.00, 'laptops', 'Dell', 'https://unsplash.com/photos/8pb7Hq539Zw'),
-               ('Fujifilm x100v', 'latest street photography camera from Fujifilm', 4000.50, 'cameras', 'Fujifilm', 'https://unsplash.com/photos/-E7CLBZf7x8')
-    `;
+          INSERT INTO products (name, description, price, category, brand, imageUrl)
+          VALUES ('Iphone X space gray', 'new smartphone from Apple', 2000.00, 'smartphones', 'Apple', 'https://unsplash.com/photos/xdLXPic3Wfk'),
+                 ('Sony WH-MX4', 'best noise cancelling headphone', 800.50, 'headsets', 'Sony', 'https://unsplash.com/photos/mpnA-Cgrzv8'),
+                 ('Dell XPS 13', 'future of laptop with core i7 and 16gb RAM included 4k screen', 2500.00, 'laptops', 'Dell', 'https://unsplash.com/photos/8pb7Hq539Zw'),
+                 ('Fujifilm x100v', 'latest street photography camera from Fujifilm', 4000.50, 'cameras', 'Fujifilm', 'https://unsplash.com/photos/-E7CLBZf7x8')
+      `;
 
   try {
     return server.pg.transact(async (client) => {
@@ -194,6 +217,7 @@ server.post("/init-data", (request, reply) => {
     process.exit(1);
   }
 });
+
 
 // Start server
 const start = async () => {
