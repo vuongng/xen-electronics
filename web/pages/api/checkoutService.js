@@ -1,4 +1,3 @@
-import Router from "next/router"
 import Invoice from "xendit-node/src/invoice/invoice"
 
 export async function checkoutWithXendit(credentials, payload) {

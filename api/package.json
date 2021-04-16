@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "ENV_FILE==./config/.env.test jest",
-    "start": "tsc && node lib/server.js",
+    "start": "tsc && node lib/app.js",
     "build": "tsc -p .",
     "lint": "tslint --project src/*.ts",
     "build:live": "nodemon --watch 'src/**/*.ts' --exec \"ts-node\" src/index.ts"

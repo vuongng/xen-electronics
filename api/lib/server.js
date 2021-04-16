@@ -131,6 +131,7 @@ server.register(function (api, opts, done) {
                 case 2:
                     products = _a.sent();
                     client.release();
+                    console.log('');
                     return [2 /*return*/, products !== null && products !== void 0 ? products : {}];
             }
         });
@@ -152,6 +153,7 @@ server.register(function (api, opts, done) {
                 case 3:
                     rows = (_a.sent()).rows;
                     client.release();
+                    console.log("There is 1 product matched: " + rows);
                     return [2 /*return*/, rows];
                 case 4:
                     err_1 = _a.sent();

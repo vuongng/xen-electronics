@@ -1,8 +1,6 @@
 import { useContext } from "react"
 import { CartContext } from "../../contexts/CartContext"
 import { checkoutWithXendit } from "../api/checkoutService"
-import Router from "next/router"
-import getConfig from "next/config"
 
 const Checkout = () => {
   const { cart } = useContext(CartContext)
@@ -15,14 +13,12 @@ const Checkout = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    const { publicRuntimeConfig } = getConfig()
-
-    const successUri = publicRuntimeConfig.checkout_success_redirect_url
-    const failureUri = publicRuntimeConfig.checkout_fail_redirect_url
-    const invoiceUrl = publicRuntimeConfig.invoice_url
+    const successUri = `${process.env.NEXT_PUBLIC_CHECKOUT_SUCCESS_REDIRECT_URL}`
+    const failureUri = `${process.env.NEXT_PUBLIC_CHECKOUT_FAIL_REDIRECT_URL}`
+    const invoiceUrl = `${process.env.NEXT_PUBLIC_INVOICE_URL}`
     const externalID = Date.now().toString()
     const credentials = {
-      secretKey: publicRuntimeConfig.xendit_secret_key,
+      secretKey: `${process.env.NEXT_PUBLIC_XENDIT_SECRET_KEY}`,
     }
 
     const payload = {
@@ -36,7 +32,6 @@ const Checkout = () => {
     }
 
     await checkoutWithXendit(credentials, payload).then((response) => {
-      // console.log(response)
       window.location = response
     })
   };
