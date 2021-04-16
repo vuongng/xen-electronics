@@ -5,7 +5,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "cd api/ tsc && node lib/server.js && cd ../../web && npm run start",
-        "build": "",
+        "build": " cd api/ tsc -p .",
         "publish": ""
     },
     "engines": {

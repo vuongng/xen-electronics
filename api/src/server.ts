@@ -1,8 +1,12 @@
-// import { App } from './app'
-import { IRequestParams, IQueryString, IRequestBody, IHeaders } from "./product.interface"
 import Fastify, { FastifyInstance, RouteShorthandOptions } from "fastify"
-import { fastifyPostgres } from "fastify-postgres"
+import { IRequestParams, IQueryString, IRequestBody, IHeaders } from "./product.interface"
+import { InvoiceRequestBody } from './payment.interface'
+import Xendit from 'xendit-node'
 import { Server, IncomingMessage, ServerResponse } from "http"
+import { fastifyPostgres } from "fastify-postgres"
+import { XenditOptions } from "xendit-node/src/xendit_opts"
+import Invoice from 'xendit-node/src/invoice/invoice'
+import * as config from './config/config.json'
 
 const server: FastifyInstance<
   Server,
@@ -76,6 +80,7 @@ server.register(
       const client = await server.pg.connect();
       const products = await client.query("SELECT * from products");
       client.release();
+      console.log('')
       return products ?? {};
     });
 
@@ -86,37 +91,67 @@ server.register(
       Headers: IHeaders;
     }>("/products/:id", async (request, reply) => {
       const { id } = request.params;
-      console.log(id);
       const client = await server.pg.connect();
       try {
         const { rows } = await client.query(
           `SELECT * FROM products WHERE id=${id}`
         );
         client.release();
-        return rows;
+        console.log(`There is 1 product matched: ${rows}`)
+        return rows
       } catch (err) {
-        server.log.error(err);
-        process.exit(1);
+        console.log(err);
+        // process.exit(1);
       }
     });
 
     // Save order
     api.post<{ Body: IRequestBody }>("/orders/save", async (request, reply) => {
       try {
-        const { products, userId, totalPrice, deliveryAddress } = request.body;
+        const { products, userId, totalPrice, deliveryAddress } = request.body
         return server.pg.transact(async (client) => {
           return await client.query(
             `INSERT INTO orders(products, totalPrice, deliveryAddress, userId)
               VALUES(${products}, ${totalPrice}, ${deliveryAddress}, ${userId})`
-          );
-        });
+          )
+        })
       } catch (err) {
-        server.log.error(err);
-        process.exit(1);
+        console.log(err)
       }
     });
 
-    done();
+    const xenditOptions: XenditOptions = {
+      secretKey: config.xendit_secret_key,
+      xenditURL: config.xendit_url
+    }
+
+    // Initiate Xendit Client
+    const i = new Invoice(xenditOptions)
+
+    // Checkout with Xendit API
+    api.post<{ Body: string }>('/checkout', async (request, reply) => {
+      const { externalID, payerEmail, description, amount, successRedirectURL, failureRedirectURL } = JSON.parse(request.body)
+      // Return redirect url to Xendit invoice page
+        // Then go back to success / fail / homepage after payment completed
+        return await i.createInvoice({
+          externalID: externalID,
+          payerEmail: payerEmail,
+          description: description,
+          amount: amount,
+          successRedirectURL: successRedirectURL,
+          failureRedirectURL: failureRedirectURL,
+          shouldSendEmail: true
+        })
+        .then((response) => {
+          console.log('Invoice created!', response)
+          return response
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    })
+
+    done()
   },
   {
     prefix: "/api",
@@ -218,18 +253,4 @@ server.post("/init-data", (request, reply) => {
   }
 });
 
-
-// Start server
-const start = async () => {
-  try {
-    await server.listen(3000);
-    const address = server.server.address();
-    const port = typeof address === "string" ? address : address?.port;
-    console.log(`Server is listening on port: ${port}`);
-  } catch (err) {
-    server.log.error(err);
-    process.exit(1);
-  }
-};
-
-start();
+export default server

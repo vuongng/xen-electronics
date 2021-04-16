@@ -39,85 +39,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.App = void 0;
-var fastify_1 = __importDefault(require("fastify"));
-var App = /** @class */ (function () {
-    function App() {
-        this.server = fastify_1.default();
-    }
-    App.prototype.register = function () { };
-    return App;
-}());
-exports.App = App;
-(function (api, opts, done) {
-    // GET all products
-    api.get("/products", function (request, reply) { return __awaiter(void 0, void 0, void 0, function () {
-        var client, products;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, server.pg.connect()];
-                case 1:
-                    client = _a.sent();
-                    return [4 /*yield*/, client.query("SELECT * from products")];
-                case 2:
-                    products = _a.sent();
-                    client.release();
-                    return [2 /*return*/, products !== null && products !== void 0 ? products : {}];
-            }
-        });
-    }); });
-    // GET product by id
-    api.get("/products/:id", function (request, reply) { return __awaiter(void 0, void 0, void 0, function () {
-        var id, client, rows, err_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    id = request.params.id;
-                    console.log(id);
-                    return [4 /*yield*/, server.pg.connect()];
-                case 1:
-                    client = _a.sent();
-                    _a.label = 2;
-                case 2:
-                    _a.trys.push([2, 4, , 5]);
-                    return [4 /*yield*/, client.query("SELECT * FROM products WHERE id=" + id)];
-                case 3:
-                    rows = (_a.sent()).rows;
-                    client.release();
-                    return [2 /*return*/, rows];
-                case 4:
-                    err_1 = _a.sent();
-                    server.log.error(err_1);
-                    process.exit(1);
-                    return [3 /*break*/, 5];
-                case 5: return [2 /*return*/];
-            }
-        });
-    }); });
-    // Save order
-    api.post("/orders/save", function (request, reply) { return __awaiter(void 0, void 0, void 0, function () {
-        var _a, products_1, userId_1, totalPrice_1, deliveryAddress_1;
-        return __generator(this, function (_b) {
-            try {
-                _a = request.body, products_1 = _a.products, userId_1 = _a.userId, totalPrice_1 = _a.totalPrice, deliveryAddress_1 = _a.deliveryAddress;
-                return [2 /*return*/, server.pg.transact(function (client) { return __awaiter(void 0, void 0, void 0, function () {
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0: return [4 /*yield*/, client.query("INSERT INTO orders(products, totalPrice, deliveryAddress, userId)\n                                    VALUES(" + products_1 + ", " + totalPrice_1 + ", " + deliveryAddress_1 + ", " + userId_1 + ")")];
-                                case 1: return [2 /*return*/, _a.sent()];
-                            }
-                        });
-                    }); })];
-            }
-            catch (err) {
-                server.log.error(err);
+var server_1 = __importDefault(require("./server"));
+// Start server
+var start = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var address, port, err_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                return [4 /*yield*/, server_1.default.listen(3000)];
+            case 1:
+                _a.sent();
+                address = server_1.default.server.address();
+                port = typeof address === "string" ? address : address === null || address === void 0 ? void 0 : address.port;
+                console.log("Server is listening on port: " + port);
+                return [3 /*break*/, 3];
+            case 2:
+                err_1 = _a.sent();
+                server_1.default.log.error(err_1);
                 process.exit(1);
-            }
-            return [2 /*return*/];
-        });
-    }); });
-    done();
-},
-    {
-        prefix: "/api",
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
     });
+}); };
+start();

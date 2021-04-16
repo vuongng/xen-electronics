@@ -1,4 +1,23 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -41,6 +60,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var fastify_1 = __importDefault(require("fastify"));
 var fastify_postgres_1 = require("fastify-postgres");
+var invoice_1 = __importDefault(require("xendit-node/src/invoice/invoice"));
+var config = __importStar(require("./config/config.json"));
 var server = fastify_1.default();
 var schema = {
     querystring: {
@@ -121,7 +142,6 @@ server.register(function (api, opts, done) {
             switch (_a.label) {
                 case 0:
                     id = request.params.id;
-                    console.log(id);
                     return [4 /*yield*/, server.pg.connect()];
                 case 1:
                     client = _a.sent();
@@ -135,8 +155,7 @@ server.register(function (api, opts, done) {
                     return [2 /*return*/, rows];
                 case 4:
                     err_1 = _a.sent();
-                    server.log.error(err_1);
-                    process.exit(1);
+                    console.log(err_1);
                     return [3 /*break*/, 5];
                 case 5: return [2 /*return*/];
             }
@@ -158,10 +177,45 @@ server.register(function (api, opts, done) {
                     }); })];
             }
             catch (err) {
-                server.log.error(err);
-                process.exit(1);
+                console.log(err);
             }
             return [2 /*return*/];
+        });
+    }); });
+    var xenditOptions = {
+        secretKey: config.xendit_secret_key,
+        xenditURL: config.xendit_url
+    };
+    // Initiate Xendit Client
+    var i = new invoice_1.default(xenditOptions);
+    // Checkout with Xendit API
+    api.post('/checkout', function (request, reply) { return __awaiter(void 0, void 0, void 0, function () {
+        var _a, externalID, payerEmail, description, amount, successRedirectURL, failureRedirectURL;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0:
+                    _a = JSON.parse(request.body), externalID = _a.externalID, payerEmail = _a.payerEmail, description = _a.description, amount = _a.amount, successRedirectURL = _a.successRedirectURL, failureRedirectURL = _a.failureRedirectURL;
+                    return [4 /*yield*/, i.createInvoice({
+                            externalID: externalID,
+                            payerEmail: payerEmail,
+                            description: description,
+                            amount: amount,
+                            successRedirectURL: successRedirectURL,
+                            failureRedirectURL: failureRedirectURL,
+                            shouldSendEmail: true
+                        })
+                            .then(function (response) {
+                            console.log('Invoice created!', response);
+                            return response;
+                        })
+                            .catch(function (error) {
+                            console.log(error);
+                        })];
+                case 1: 
+                // Return redirect url to Xendit invoice page
+                // Then go back to success / fail / homepage after payment completed
+                return [2 /*return*/, _b.sent()];
+            }
         });
     }); });
     done();
@@ -267,27 +321,4 @@ server.post("/init-data", function (request, reply) {
         process.exit(1);
     }
 });
-// Start server
-var start = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var address, port, err_5;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, server.listen(3000)];
-            case 1:
-                _a.sent();
-                address = server.server.address();
-                port = typeof address === "string" ? address : address === null || address === void 0 ? void 0 : address.port;
-                console.log("Server is listening on port: " + port);
-                return [3 /*break*/, 3];
-            case 2:
-                err_5 = _a.sent();
-                server.log.error(err_5);
-                process.exit(1);
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
-        }
-    });
-}); };
-start();
+exports.default = server;
