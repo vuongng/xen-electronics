@@ -1,6 +1,6 @@
 // import { loadEnvConfig } from '@next/env' // for test purpose only
 
-const PRODUCT_API_URL = `${process.env.PRODUCT_API}`
+const PRODUCT_API_URL = `${process.env.NEXT_PUBLIC_PRODUCT_API}`
 
 export async function getProducts() {
     return await fetch(PRODUCT_API_URL)
