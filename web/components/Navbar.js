@@ -2,6 +2,7 @@ import { signIn, signOut, useSession } from "next-auth/client";
 import Link from "next/link";
 import { useContext } from "react";
 import { CartContext } from "../contexts/CartContext";
+import SearchInput from "./SearchInput";
 
 const Navbar = () => {
   const { session, loading } = useSession();
@@ -41,7 +42,9 @@ const Navbar = () => {
         </button>
       </div>
       <div className="w-full block flex-grow lg:flex lg:items-center lg:w-auto">
-        <div className="text-sm lg:flex-grow"></div>
+        <div className="text-sm lg:flex-grow">
+          <SearchInput></SearchInput>
+        </div>
         <div className="flex">
           <svg
             xmlns="http://www.w3.org/2000/svg"

@@ -9,17 +9,17 @@ const Home = ({ products }) => {
 
   return (
     <div className="flex flex-wrap flex-row">
-        {products.map((item, index) => (
-          <ProductCard product={item} key={index} />
-        ))}
-      </div>
-  );
+      {products.map((item, index) => (
+        <ProductCard product={item} key={index} />
+      ))}
+    </div>
+  )
 }
 
 export async function getServerSideProps() {
-  const products = await getProducts();
+  const products = await getProducts()
 
-  return { props: { products } };
+  return { props: { products } }
 }
 
 export default Home

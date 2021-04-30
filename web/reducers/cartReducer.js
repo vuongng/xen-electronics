@@ -1,8 +1,12 @@
-export const ADD_PRODUCT = "ADD_PRODUCT"
-export const DELETE_PRODUCT = "REMOVE_PRODUCT"
+import { useEffect } from 'react'
+
+export const ADD_PRODUCT = 'ADD_PRODUCT'
+export const DELETE_PRODUCT = 'REMOVE_PRODUCT'
+export const FETCH_CART = 'FETCH_CART'
 
 const addToCart = (product, userEmail, state) => {
-  const updatedCart = [...state.cart];
+  const updatedCart = [...state.cart]
+
   const updatedItemIndex = updatedCart.findIndex(
     (item) => item.id === product.id
   );
@@ -17,6 +21,8 @@ const addToCart = (product, userEmail, state) => {
     updatedCart[updatedItemIndex] = updatedItem;
   }
 
+  localStorage.setItem('cart', JSON.stringify(updatedCart))
+
   return { ...state, cart: updatedCart };
 }
 
@@ -25,27 +31,39 @@ const deleteCartItem = (productId, state) => {
   const updatedCart = [...state.cart];
   const updatedItemIndex = updatedCart.findIndex(
     (item) => item.id === productId
-  );
+  )
 
   const updatedItem = {
     ...updatedCart[updatedItemIndex],
-  };
+  }
+
   updatedItem.quantity--;
   if (updatedItem.quantity <= 0) {
     updatedCart.splice(updatedItemIndex, 1);
   } else {
     updatedCart[updatedItemIndex] = updatedItem;
   }
-  return { ...state, cart: updatedCart };
+
+  localStorage.setItem('cart', JSON.stringify(updatedCart))
+
+  return { ...state, cart: updatedCart }
+}
+
+const fetchCartFromLocalStorage = (state) => {
+  const initialCart = JSON.parse(localStorage.getItem('cart')) ?? []
+
+  return { ...state, cart: initialCart }
 }
 
 export const CartReducer = (state, action) => {
   switch (action.type) {
     case ADD_PRODUCT:
-      return addToCart(action.product, action.userEmail, state);
+      return addToCart(action.product, action.userEmail, state)
     case DELETE_PRODUCT:
-      return deleteCartItem(action.productId, state);
+      return deleteCartItem(action.productId, state)
+    case FETCH_CART:
+      return fetchCartFromLocalStorage(state)
     default:
-      return state;
+      return state
   }
 };
