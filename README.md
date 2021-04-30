@@ -5,9 +5,11 @@ This is a [Xendit Electronics](https://xen-electronic.herokuapp.com/) project wh
 First, run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
+# API - Nodejs
+cd api/ && npm run build && npm run start
+
+# Web - Nextjs
+cd web/ && npm run build && npm run dev
 ```
 
 To build for production
