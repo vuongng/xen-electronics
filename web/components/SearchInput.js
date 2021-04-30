@@ -1,12 +1,12 @@
 import { useContext, useState } from 'react'
 import { getProducts } from '../pages/api/productService'
 import ProductContext from '../contexts/ProductContext'
+import Link from 'next/link'
 
 const SearchInput = () => {
     const [ searchResult, setSearchResult ] = useState([])
 
     const handleSearch = (products, term) => {
-        // console.log(products)
         const res = products.filter((product) => {
             return product.name.split('').some((substring) => term.includes(substring))
         })
@@ -17,11 +17,12 @@ const SearchInput = () => {
         <ProductContext.Consumer>
             {
                 value => (
-                    <div className="flex flex-col">
+                    <div className="flex flex-col w-full">
                         <div>
                             <input className="bg-white p-4 text-black w-full flex items-center"
                                 type="text" id="searchTerm"
                                 name="searchTerm"
+                                autoComplete="off"
                                 onChange={(e) => handleSearch(value, e.target.value)} />
                             <button type="submit"
                                 className="absolute right-0 top-0 mt-5 mr-4">
@@ -36,12 +37,17 @@ const SearchInput = () => {
                                 </svg>
                             </button>
                         </div>
-                        <ul className="z-10">
+                        <ul className="absolute z-10 mt-12 bg-white left-10 right-10 top-14">
                             {searchResult.map((value, index) => (
-                                <li key={index} className="bg-white text-black w-full flex items-center flex-row p4">
-                                    {/* <img src={value.imageurl} className="object-contain" /> */}
-                                    <p className="font-bold p-4">{value.name}</p>
-                                    <p className="font-semibold text-red-900 p-4">{value.price}</p>
+                                <li key={index} className="bg-white text-black w-full flex justify-between items-center flex-row p4 absolute shadow-md">
+                                    <Link href={`/products/${value.id}`}>
+                                        <a className="flex flex-row justify-between p-4">
+                                            <img src={value.imageurl} className="object-cover h-16 w-16 self-center" />
+                                            <p className="font-bold text-lg self-center ml-4">{value.name}</p>
+                                            <p className="font-semibold text-lg text-red-900 self-center ml-4">{value.price}</p>
+                                        </a>
+                                        {/* <hr className="border-gray-400" /> */}
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
