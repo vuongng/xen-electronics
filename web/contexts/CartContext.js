@@ -52,7 +52,7 @@ const CartProvider = ({ children }) => {
     >
       {children}
     </CartContext.Provider>
-  );
-};
+  )
+}
 
-export { CartProvider, CartContext };
+export { CartProvider, CartContext }

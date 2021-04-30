@@ -41,4 +41,4 @@ const ProductCard = (props) => {
   );
 };
 
-export default ProductCard;
+export default ProductCard
